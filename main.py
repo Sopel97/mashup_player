@@ -162,6 +162,7 @@ def split_by_onsets(sound, offset_ms=-100, min_segment_length_ms=250):
     # return an array of audio segments
     sound_length_ms = len(sound)
     librosa_samples, num_channels = audiosegment_to_librosawav(sound)
+    
     sr = sound.frame_rate * num_channels
     t0 = time.time()
     # Changing the hop_length has a roughly quadratic to cubic effect on runtime.
@@ -604,12 +605,20 @@ class MashupPlayer():
         self.sound_clip_provider.set_crossfade_duration_ms(int(ms))
 
     def set_volume(self, value):
-        self.sound_queue_player.set_volume((int(value) / 100) ** 2) # scales better
+        # from 0dB to -60dB
+        #self.sound_queue_player.set_volume((int(value) / 100) ** 2) # scales better
+        if int(value) == 0:
+            linear_volume = 0
+        else:
+            linear_volume = 10 ** (2 * (int(value) / 100 - 1))
+        self.sound_queue_player.set_volume(linear_volume) # scales better
+        #a = (int(value) / 100) ** 2
+        #b = 10 ** (3 * (int(value) / 100 - 1))
+        #print(value, a, b)
+
 
     def save_config(self):
         path = filedialog.asksaveasfilename()
-        if not os.path.exists(path):
-            return
 
         config_dict = {
             'volume' : int(self.volume_scale.get()),
